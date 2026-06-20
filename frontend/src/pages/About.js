@@ -105,9 +105,7 @@ function About() {
                 <a href='https://github.com/MohitBH6' target='_blank' rel='noreferrer' style={styles.devLink}>
                   🐙 GitHub
                 </a>
-                <a href='https://linkedin.com' target='_blank' rel='noreferrer' style={styles.devLink}>
-                  💼 LinkedIn
-                </a>
+               
               </div>
             </div>
           </div>
