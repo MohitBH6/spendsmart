@@ -1,0 +1,13 @@
+# Python
+backend/__pycache__/
+backend/*.pyc
+backend/spendsmart.db
+backend/instance/
+
+# React
+frontend/node_modules/
+frontend/build/
+
+# Environment
+.env
+*.env
