@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Pie, Line } from 'react-chartjs-2'
+import { Pie } from 'react-chartjs-2'
 import {
   Chart as ChartJS, ArcElement, Tooltip, Legend,
   CategoryScale, LinearScale, PointElement, LineElement
@@ -13,6 +13,10 @@ function Dashboard() {
   const [expenses, setExpenses] = useState([])
   const [budgets, setBudgets] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('This Month')
+  const [customMonth, setCustomMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  )
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
@@ -34,20 +38,39 @@ function Dashboard() {
     }
   }
 
-  // calculate total spent this month
   const now = new Date()
-  const thisMonthExpenses = expenses.filter(e => {
-    const d = new Date(e.date)
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  })
 
-  const totalSpent = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const getFilteredExpenses = () => {
+    return expenses.filter(e => {
+      const d = new Date(e.date)
+      if (filter === 'This Week') {
+        const startOfWeek = new Date(now)
+        startOfWeek.setDate(now.getDate() - now.getDay())
+        startOfWeek.setHours(0, 0, 0, 0)
+        return d >= startOfWeek
+      }
+      if (filter === 'This Month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      }
+      if (filter === 'Last Month') {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear()
+      }
+      if (filter === 'Custom Month') {
+        const [year, month] = customMonth.split('-').map(Number)
+        return d.getMonth() === month - 1 && d.getFullYear() === year
+      }
+      return true // All Time
+    })
+  }
+
+  const filteredExpenses = getFilteredExpenses()
+  const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
   const totalBudget = budgets.reduce((sum, b) => sum + b.monthly_limit, 0)
   const totalRemaining = totalBudget - totalSpent
 
-  // category breakdown for pie chart
   const categoryTotals = {}
-  thisMonthExpenses.forEach(e => {
+  filteredExpenses.forEach(e => {
     categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount
   })
 
@@ -60,7 +83,6 @@ function Dashboard() {
     }]
   }
 
-  // anomaly detection — find categories spending more than usual
   const anomalies = []
   budgets.forEach(b => {
     if (b.percentage > 80) {
@@ -73,8 +95,7 @@ function Dashboard() {
     }
   })
 
-  // last 6 expenses for recent list
-  const recentExpenses = expenses.slice(0, 5)
+  const recentExpenses = filteredExpenses.slice(0, 5)
 
   const categoryEmoji = {
     Food: '🍔', Transport: '🚌', Shopping: '🛍️',
@@ -84,6 +105,15 @@ function Dashboard() {
   const categoryColors = {
     Food: '#EEEDFE', Transport: '#E1F5EE', Shopping: '#FAEEDA',
     Entertainment: '#FCEBEB', Education: '#E6F1FB', Health: '#E1F5EE', Other: '#f5f5f5'
+  }
+
+  // label for metric cards based on filter
+  const filterLabel = {
+    'This Week': 'this week',
+    'This Month': 'this month',
+    'Last Month': 'last month',
+    'All Time': 'all time',
+    'Custom Month': customMonth,
   }
 
   if (loading) {
@@ -102,11 +132,33 @@ function Dashboard() {
       <Navbar />
       <div style={{ padding: '32px', maxWidth: '1100px', margin: '0 auto' }}>
 
-        {/* Welcome */}
-        <div style={styles.welcome}>
+        {/* Welcome + Filter */}
+        <div style={styles.welcomeRow}>
           <div>
             <h1 style={styles.welcomeTitle}>Good day, {user.name?.split(' ')[0]}! 👋</h1>
-            <p style={styles.welcomeSub}>Here's your spending overview for this month</p>
+            <p style={styles.welcomeSub}>Here's your spending overview</p>
+          </div>
+          <div style={styles.filterSection}>
+            <div style={styles.filterBar}>
+              {['This Week', 'This Month', 'Last Month', 'All Time', 'Custom Month'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  style={filter === f ? styles.filterBtnActive : styles.filterBtn}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            {/* Month picker — only shows when Custom Month selected */}
+            {filter === 'Custom Month' && (
+              <input
+                type='month'
+                value={customMonth}
+                onChange={(e) => setCustomMonth(e.target.value)}
+                style={styles.monthPicker}
+              />
+            )}
           </div>
         </div>
 
@@ -130,7 +182,7 @@ function Dashboard() {
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Total Spent</div>
             <div style={styles.metricVal}>₹{totalSpent.toFixed(0)}</div>
-            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>this month</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{filterLabel[filter]}</div>
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Budget Remaining</div>
@@ -141,8 +193,8 @@ function Dashboard() {
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Transactions</div>
-            <div style={styles.metricVal}>{thisMonthExpenses.length}</div>
-            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>this month</div>
+            <div style={styles.metricVal}>{filteredExpenses.length}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{filterLabel[filter]}</div>
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Avg per Day</div>
@@ -155,12 +207,10 @@ function Dashboard() {
 
         {/* Charts Row */}
         <div style={styles.chartsGrid}>
-
-          {/* Pie Chart */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Spending by Category</h3>
             {Object.keys(categoryTotals).length === 0 ? (
-              <p style={{ color: '#888', fontSize: '14px' }}>No expenses this month yet</p>
+              <p style={{ color: '#888', fontSize: '14px' }}>No expenses for this period</p>
             ) : (
               <div style={{ maxWidth: '260px', margin: '0 auto' }}>
                 <Pie data={pieData} options={{ plugins: { legend: { position: 'bottom' } } }} />
@@ -168,7 +218,6 @@ function Dashboard() {
             )}
           </div>
 
-          {/* Budget Progress */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Budget Progress</h3>
             {budgets.length === 0 ? (
@@ -205,9 +254,14 @@ function Dashboard() {
 
         {/* Recent Transactions */}
         <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Recent Transactions</h3>
+          <h3 style={styles.cardTitle}>
+            Recent Transactions
+            <span style={{ fontSize: '13px', fontWeight: '400', color: '#888', marginLeft: '8px' }}>
+              ({filteredExpenses.length} total for {filterLabel[filter]})
+            </span>
+          </h3>
           {recentExpenses.length === 0 ? (
-            <p style={{ color: '#888', fontSize: '14px' }}>No transactions yet</p>
+            <p style={{ color: '#888', fontSize: '14px' }}>No transactions for this period</p>
           ) : (
             recentExpenses.map(exp => (
               <div key={exp.id} style={styles.expRow}>
@@ -239,8 +293,55 @@ function Dashboard() {
 }
 
 const styles = {
-  welcome: {
+  welcomeRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: '24px',
+  },
+  filterSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '10px',
+  },
+  filterBar: {
+    display: 'flex',
+    gap: '4px',
+    background: '#fff',
+    padding: '6px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+  },
+  filterBtn: {
+    padding: '7px 14px',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '13px',
+    color: '#666',
+    background: 'transparent',
+    cursor: 'pointer',
+    fontWeight: '400',
+  },
+  filterBtnActive: {
+    padding: '7px 14px',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '13px',
+    color: '#534AB7',
+    background: '#EEEDFE',
+    cursor: 'pointer',
+    fontWeight: '500',
+  },
+  monthPicker: {
+    padding: '7px 14px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    fontSize: '13px',
+    color: '#333',
+    outline: 'none',
+    background: '#fff',
+    cursor: 'pointer',
   },
   welcomeTitle: {
     fontSize: '22px',

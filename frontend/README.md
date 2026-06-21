@@ -1,70 +1,196 @@
-# Getting Started with Create React App
+# 💰 SpendSmart — Personal Finance Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack web application to track daily expenses, set monthly budgets, and get smart spending insights with anomaly detection.
 
-## Available Scripts
+![Dashboard](https://via.placeholder.com/800x400?text=SpendSmart+Dashboard)
 
-In the project directory, you can run:
+## 🚀 Live Demo
+- Frontend: [Coming Soon]
+- Backend API: [Coming Soon]
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## ✨ Features
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **📊 Visual Dashboard** — Pie chart category breakdown, budget progress bars, and key spending metrics
+- **⚠️ Smart Anomaly Alerts** — Automatically detects unusual spending using Z-score statistical analysis
+- **🎯 Budget Goals** — Set monthly limits per category with color-coded progress bars (green → orange → red)
+- **📝 Expense Tracking** — Add, view, and delete expenses with category, description, and date
+- **📅 Date Filters** — Filter dashboard by This Week / This Month / Last Month / All Time / Custom Month
+- **🔒 Secure Authentication** — JWT-based login with Werkzeug password hashing
+- **📈 Monthly Insights** — Total spent, remaining budget, transaction count, and daily averages
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🛠️ Tech Stack
 
-### `npm run build`
+### Frontend
+- React.js
+- Chart.js + react-chartjs-2
+- React Router DOM
+- Axios
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Backend
+- Python
+- Flask
+- Flask-JWT-Extended
+- Flask-CORS
+- SQLAlchemy ORM
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Database
+- SQLite (development)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Analytics
+- NumPy (Z-score anomaly detection)
+- Pandas
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 📁 Project Structure
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+spendsmart/
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+├── backend/
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+│   ├── app.py          # Flask entry point
 
-## Learn More
+│   ├── config.py       # Configuration & DB settings
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+│   ├── models.py       # Database models (User, Expense, Budget)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+│   ├── auth.py         # Register & Login API routes
 
-### Code Splitting
+│   ├── expenses.py     # Expense CRUD API routes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+│   ├── budgets.py      # Budget goals API routes
 
-### Analyzing the Bundle Size
+│   ├── analytics.py    # Anomaly detection & monthly summary
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+│   └── requirements.txt
 
-### Making a Progressive Web App
+├── frontend/
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+│   └── src/
 
-### Advanced Configuration
+│       ├── pages/
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+│       │   ├── Dashboard.js
 
-### Deployment
+│       │   ├── Expenses.js
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+│       │   ├── Budgets.js
 
-### `npm run build` fails to minify
+│       │   ├── Login.js
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+│       │   ├── Register.js
+
+│       │   └── About.js
+
+│       ├── components/
+
+│       │   ├── Navbar.js
+
+│       │   └── PrivateRoute.js
+
+│       └── api/
+
+│           └── axios.js
+
+└── README.md
+
+---
+
+## ⚙️ Setup & Installation
+
+### Prerequisites
+- Python 3.8+
+- Node.js 18+
+- Git
+
+### Backend Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/YOUR_USERNAME/spendsmart.git
+cd spendsmart/backend
+
+# Install dependencies
+pip install flask flask-sqlalchemy flask-jwt-extended flask-cors werkzeug numpy
+
+# Run Flask server
+python app.py
+# Server runs at http://localhost:5000
+```
+
+### Frontend Setup
+
+```bash
+cd spendsmart/frontend
+
+# Install dependencies
+npm install
+
+# Start React app
+npm start
+# App runs at http://localhost:3000
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login and get JWT token |
+
+### Expenses
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/expenses/` | Get all expenses |
+| POST | `/api/expenses/add` | Add new expense |
+| PUT | `/api/expenses/edit/<id>` | Edit expense |
+| DELETE | `/api/expenses/delete/<id>` | Delete expense |
+
+### Budgets
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/budgets/` | Get all budgets with spending |
+| POST | `/api/budgets/set` | Set or update budget |
+| DELETE | `/api/budgets/delete/<id>` | Delete budget |
+
+### Analytics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/anomalies` | Detect spending anomalies |
+| GET | `/api/analytics/summary` | Monthly spending summary |
+
+---
+
+## 📊 How Anomaly Detection Works
+
+SpendSmart uses **Z-score statistical analysis** to detect unusual spending:
+
+1. Groups your expenses by category and week for the last 90 days
+2. Calculates the **mean** and **standard deviation** of weekly spending per category
+3. Computes the **Z-score** for the current week's spending
+4. If Z-score > 1.5 → flags it as an anomaly with a detailed alert message
+
+```python
+z_score = (current_week_spend - mean) / std
+if z_score > 1.5:
+    # trigger alert
+```
+
+---
+
+## 👨‍💻 Developer
+
+**Mohit Kumar**
+BE (Computer Science & Engineering) — Panjab University, Chandigarh
+
+- 📧 mohitpegowal293@gmail.com
+- 🐙 [GitHub](https://github.com/MohitBH6)
+---
+
