@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import API from '../api/axios'
+import Logo from '../components/Logo'
 
 function Register() {
   const navigate = useNavigate()
@@ -31,7 +32,9 @@ function Register() {
     <div style={styles.page}>
       <div style={styles.card}>
 
-        <div style={styles.logo}>💰 SpendSmart</div>
+        <div style={styles.logo}>
+          <Logo size={26} /> SpendSmart
+        </div>
         <h2 style={styles.title}>Create account</h2>
         <p style={styles.subtitle}>Start tracking your expenses today</p>
 

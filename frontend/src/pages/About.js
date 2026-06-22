@@ -1,4 +1,5 @@
 import Navbar from '../components/Navbar'
+import Logo from '../components/Logo'
 
 function About() {
   return (
@@ -9,7 +10,7 @@ function About() {
         {/* What is SpendSmart */}
         <div style={styles.card}>
           <div style={styles.appHeader}>
-            <div style={styles.appLogo}>💰</div>
+            <div style={styles.appLogo}><Logo size={48} /></div>
             <div>
               <h1 style={styles.appName}>SpendSmart</h1>
               <p style={styles.appTagline}>Personal Finance Tracker</p>

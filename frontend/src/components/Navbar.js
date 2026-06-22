@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import Logo from './Logo'
 
 function Navbar() {
   const navigate = useNavigate()
@@ -18,10 +19,10 @@ function Navbar() {
   return (
     <nav style={styles.nav}>
       {/* Logo */}
-      <Link to='/dashboard' style={styles.logo}>
-        💰 SpendSmart
-      </Link>
-
+    <Link to='/dashboard' style={styles.logo}>
+  <Logo size={28} />
+  <span>SpendSmart</span>
+</Link>
       {/* Nav Links */}
       <div style={styles.links}>
         <Link to='/dashboard' style={isActive('/dashboard') ? styles.linkActive : styles.link}>
@@ -67,12 +68,15 @@ const styles = {
     top: 0,
     zIndex: 100,
   },
-  logo: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#534AB7',
-    textDecoration: 'none',
-  },
+logo: {
+  fontSize: '18px',
+  fontWeight: '600',
+  color: '#534AB7',
+  textDecoration: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+},
   links: {
     display: 'flex',
     gap: '4px',

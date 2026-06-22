@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import API from '../api/axios'
+import Logo from '../components/Logo'
 
 function Login() {
   const navigate = useNavigate()
@@ -35,7 +36,9 @@ function Login() {
       <div style={styles.card}>
 
         {/* Logo */}
-        <div style={styles.logo}>💰 SpendSmart</div>
+        <div style={styles.logo}>
+  <Logo size={26} /> SpendSmart
+</div>
         <h2 style={styles.title}>Welcome back</h2>
         <p style={styles.subtitle}>Login to your account</p>
 
@@ -105,12 +108,15 @@ const styles = {
     maxWidth: '420px',
     boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
   },
-  logo: {
-    fontSize: '24px',
-    fontWeight: '600',
-    color: '#534AB7',
-    marginBottom: '24px',
-  },
+logo: {
+  fontSize: '24px',
+  fontWeight: '600',
+  color: '#534AB7',
+  marginBottom: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+},
   title: {
     fontSize: '22px',
     fontWeight: '600',
