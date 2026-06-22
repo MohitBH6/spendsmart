@@ -32,6 +32,19 @@ def register():
     return jsonify({'message': 'Account created successfully!'}), 201
 
 
+@auth_bp.route('/debug-users')
+def debug_users():
+    users = User.query.all()
+
+    return jsonify([
+        {
+            "id": u.id,
+            "email": u.email,
+            "name": u.name
+        }
+        for u in users
+    ])
+
 # LOGIN — POST /api/auth/login
 @auth_bp.route('/login', methods=['POST'])
 def login():
