@@ -7,6 +7,7 @@ const CATEGORIES = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Education
 function Expenses() {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
+  const [adding, setAdding] = useState(false) // NEW — tracks adding state
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [formData, setFormData] = useState({
@@ -39,10 +40,21 @@ function Expenses() {
     e.preventDefault()
     setError('')
     setSuccess('')
+
+    // FIX 1 — validate negative or zero amount
+    const amount = parseFloat(formData.amount)
+    if (isNaN(amount) || amount <= 0) {
+      setError('⚠️ Please enter a valid amount greater than 0')
+      return
+    }
+
+    // FIX 2 — disable button while adding
+    setAdding(true)
+
     try {
       await API.post('/api/expenses/add', {
         ...formData,
-        amount: parseFloat(formData.amount)
+        amount: amount
       })
       setSuccess('✅ Expense added successfully!')
       setFormData({
@@ -54,6 +66,8 @@ function Expenses() {
       fetchExpenses()
     } catch (err) {
       setError('Failed to add expense')
+    } finally {
+      setAdding(false) // re-enable button after done
     }
   }
 
@@ -108,14 +122,23 @@ function Expenses() {
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Amount (₹)</label>
                 <input
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    borderColor: formData.amount && parseFloat(formData.amount) <= 0 ? '#E24B4A' : '#e0e0e0'
+                  }}
                   type='number'
                   name='amount'
                   placeholder='0.00'
                   value={formData.amount}
                   onChange={handleChange}
+                  min='0.01'
+                  step='0.01'
                   required
                 />
+                {/* inline warning while typing */}
+                {formData.amount && parseFloat(formData.amount) <= 0 && (
+                  <span style={styles.fieldError}>⚠️ Amount must be greater than 0</span>
+                )}
               </div>
 
               <div style={styles.inputGroup}>
@@ -159,8 +182,13 @@ function Expenses() {
               </div>
             </div>
 
-            <button style={styles.btn} type='submit'>
-              + Add Expense
+            {/* FIX 2 — button disabled + text changes while adding */}
+            <button
+              style={adding ? styles.btnDisabled : styles.btn}
+              type='submit'
+              disabled={adding}
+            >
+              {adding ? '⏳ Adding...' : '+ Add Expense'}
             </button>
           </form>
         </div>
@@ -311,6 +339,11 @@ const styles = {
     color: '#333',
     background: '#fff',
   },
+  fieldError: {
+    fontSize: '12px',
+    color: '#E24B4A',
+    fontWeight: '500',
+  },
   btn: {
     padding: '12px 32px',
     background: '#534AB7',
@@ -320,6 +353,16 @@ const styles = {
     fontSize: '15px',
     fontWeight: '500',
     cursor: 'pointer',
+  },
+  btnDisabled: {
+    padding: '12px 32px',
+    background: '#a9a4d8',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: '500',
+    cursor: 'not-allowed',
   },
   error: {
     background: '#FCEBEB',
