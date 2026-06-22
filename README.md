@@ -5,8 +5,8 @@ A full-stack web application to track daily expenses, set monthly budgets, and g
 ![Dashboard](https://via.placeholder.com/800x400?text=SpendSmart+Dashboard)
 
 ## 🚀 Live Demo
-- Frontend: [Coming Soon]
-- Backend API: [Coming Soon]
+- Frontend: [Live Demo](https://spendsmart-swart.vercel.app)
+- Backend API: [https://spendsmart-backend-jmwb.onrender.com](https://spendsmart-backend-jmwb.onrender.com)
 
 ---
 
