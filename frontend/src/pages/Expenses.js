@@ -16,7 +16,6 @@ function Expenses() {
     date: new Date().toISOString().split('T')[0]
   })
 
-  // fetch expenses when page loads
   useEffect(() => {
     fetchExpenses()
   }, [])
@@ -45,14 +44,14 @@ function Expenses() {
         ...formData,
         amount: parseFloat(formData.amount)
       })
-      setSuccess('Expense added!')
+      setSuccess('✅ Expense added successfully!')
       setFormData({
         amount: '',
         category: 'Food',
         description: '',
         date: new Date().toISOString().split('T')[0]
       })
-      fetchExpenses() // refresh list
+      fetchExpenses()
     } catch (err) {
       setError('Failed to add expense')
     }
@@ -68,13 +67,8 @@ function Expenses() {
   }
 
   const categoryColors = {
-    Food: '#EEEDFE',
-    Transport: '#E1F5EE',
-    Shopping: '#FAEEDA',
-    Entertainment: '#FCEBEB',
-    Education: '#E6F1FB',
-    Health: '#E1F5EE',
-    Other: '#f5f5f5'
+    Food: '#EEEDFE', Transport: '#E1F5EE', Shopping: '#FAEEDA',
+    Entertainment: '#FCEBEB', Education: '#E6F1FB', Health: '#E1F5EE', Other: '#f5f5f5'
   }
 
   const categoryEmoji = {
@@ -82,14 +76,29 @@ function Expenses() {
     Entertainment: '🎬', Education: '📚', Health: '💊', Other: '📌'
   }
 
+  const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
+
   return (
     <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
       <Navbar />
-      <div style={{ padding: '32px', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }}>
+
+        {/* Page Header */}
+        <div style={styles.pageHeader}>
+          <div>
+            <h1 style={styles.pageTitle}>Expenses</h1>
+            <p style={styles.pageSub}>Track and manage your daily spending</p>
+          </div>
+          <div style={styles.totalBadge}>
+            <div style={styles.totalLabel}>Total Spent</div>
+            <div style={styles.totalVal}>₹{totalSpent.toFixed(0)}</div>
+            <div style={styles.totalSub}>{expenses.length} transactions</div>
+          </div>
+        </div>
 
         {/* Add Expense Form */}
         <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Add New Expense</h2>
+          <h2 style={styles.cardTitle}>➕ Add New Expense</h2>
 
           {error && <div style={styles.error}>{error}</div>}
           {success && <div style={styles.success}>{success}</div>}
@@ -118,7 +127,9 @@ function Expenses() {
                   onChange={handleChange}
                 >
                   {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>
+                      {categoryEmoji[cat]} {cat}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -156,12 +167,19 @@ function Expenses() {
 
         {/* Expenses List */}
         <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Recent Transactions</h2>
+          <div style={styles.listHeader}>
+            <h2 style={styles.cardTitle}>Recent Transactions</h2>
+            <span style={styles.countBadge}>{expenses.length} total</span>
+          </div>
 
           {loading ? (
-            <p style={{ color: '#888', fontSize: '14px' }}>Loading...</p>
+            <p style={{ color: '#888', fontSize: '15px' }}>Loading...</p>
           ) : expenses.length === 0 ? (
-            <p style={{ color: '#888', fontSize: '14px' }}>No expenses yet. Add your first one above!</p>
+            <div style={styles.emptyState}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+              <div style={{ fontSize: '16px', fontWeight: '500', color: '#444' }}>No expenses yet</div>
+              <div style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>Add your first expense above!</div>
+            </div>
           ) : (
             expenses.map(exp => (
               <div key={exp.id} style={styles.expenseRow}>
@@ -174,7 +192,11 @@ function Expenses() {
 
                 <div style={{ flex: 1 }}>
                   <div style={styles.expName}>{exp.description || exp.category}</div>
-                  <div style={styles.expMeta}>{exp.category} · {exp.date}</div>
+                  <div style={styles.expMeta}>
+                    <span style={styles.categoryTag}>{exp.category}</span>
+                    <span>·</span>
+                    <span>{exp.date}</span>
+                  </div>
                 </div>
 
                 <div style={styles.expAmount}>-₹{exp.amount}</div>
@@ -182,6 +204,7 @@ function Expenses() {
                 <button
                   onClick={() => handleDelete(exp.id)}
                   style={styles.deleteBtn}
+                  title='Delete expense'
                 >
                   🗑️
                 </button>
@@ -196,109 +219,178 @@ function Expenses() {
 }
 
 const styles = {
+  pageHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '32px',
+  },
+  pageTitle: {
+    fontSize: '32px',
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: '6px',
+  },
+  pageSub: {
+    fontSize: '16px',
+    color: '#888',
+  },
+  totalBadge: {
+    background: '#fff',
+    borderRadius: '16px',
+    padding: '20px 28px',
+    boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+    textAlign: 'right',
+  },
+  totalLabel: {
+    fontSize: '12px',
+    color: '#888',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: '6px',
+  },
+  totalVal: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#534AB7',
+  },
+  totalSub: {
+    fontSize: '13px',
+    color: '#aaa',
+    marginTop: '4px',
+  },
   card: {
     background: '#fff',
     borderRadius: '16px',
-    padding: '24px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    padding: '28px',
+    marginBottom: '24px',
+    boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
   },
   cardTitle: {
-    fontSize: '16px',
+    fontSize: '18px',
     fontWeight: '600',
     color: '#1a1a1a',
     marginBottom: '20px',
   },
+  listHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '4px',
+  },
+  countBadge: {
+    fontSize: '13px',
+    background: '#EEEDFE',
+    color: '#534AB7',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontWeight: '500',
+  },
   formGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
-    marginBottom: '16px',
+    gap: '20px',
+    marginBottom: '20px',
   },
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
   },
   label: {
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: '500',
     color: '#444',
   },
   input: {
-    padding: '10px 14px',
+    padding: '12px 16px',
     border: '1px solid #e0e0e0',
-    borderRadius: '8px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    fontSize: '15px',
     outline: 'none',
     color: '#333',
     background: '#fff',
   },
   btn: {
-    padding: '10px 24px',
+    padding: '12px 32px',
     background: '#534AB7',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    fontSize: '15px',
     fontWeight: '500',
     cursor: 'pointer',
   },
   error: {
     background: '#FCEBEB',
     color: '#791F1F',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    fontSize: '13px',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    fontSize: '14px',
     marginBottom: '16px',
   },
   success: {
     background: '#E1F5EE',
     color: '#085041',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    fontSize: '13px',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    fontSize: '14px',
     marginBottom: '16px',
   },
   expenseRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '12px 0',
+    gap: '14px',
+    padding: '14px 0',
     borderBottom: '1px solid #f5f5f5',
   },
   expIcon: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '10px',
+    width: '44px',
+    height: '44px',
+    borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '18px',
+    fontSize: '22px',
     flexShrink: 0,
   },
   expName: {
-    fontSize: '14px',
+    fontSize: '15px',
     fontWeight: '500',
     color: '#1a1a1a',
   },
   expMeta: {
-    fontSize: '12px',
+    fontSize: '13px',
     color: '#888',
-    marginTop: '2px',
+    marginTop: '3px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  categoryTag: {
+    background: '#f5f5f5',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    color: '#666',
   },
   expAmount: {
-    fontSize: '14px',
-    fontWeight: '500',
+    fontSize: '16px',
+    fontWeight: '600',
     color: '#A32D2D',
   },
   deleteBtn: {
     background: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '16px',
-    padding: '4px',
+    fontSize: '18px',
+    padding: '4px 8px',
+    borderRadius: '8px',
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '48px 0',
   },
 }
 
-export default Expenses 
+export default Expenses
