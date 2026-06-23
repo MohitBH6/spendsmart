@@ -62,6 +62,29 @@ function Dashboard() {
 
   const filteredExpenses = getFilteredExpenses()
   const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
+
+  // ✅ FIX: Calculate budget progress from filtered expenses
+  // This ensures when viewing Last Month or Custom Month,
+  // budget bars show that period's spending — not current month
+  const budgetProgress = budgets.map(b => {
+    const spentInPeriod = filteredExpenses
+      .filter(e => e.category === b.category)
+      .reduce((sum, e) => sum + e.amount, 0)
+    const pct = b.monthly_limit > 0
+      ? parseFloat(((spentInPeriod / b.monthly_limit) * 100).toFixed(1))
+      : 0
+    const extra = spentInPeriod > b.monthly_limit
+      ? (spentInPeriod - b.monthly_limit).toFixed(0)
+      : 0
+    return {
+      ...b,
+      spentInPeriod,
+      pct,
+      extra,
+      remaining: (b.monthly_limit - spentInPeriod).toFixed(0)
+    }
+  })
+
   const totalBudget = budgets.reduce((sum, b) => sum + b.monthly_limit, 0)
   const totalRemaining = totalBudget - totalSpent
 
@@ -79,12 +102,8 @@ function Dashboard() {
     }]
   }
 
-  const anomalies = []
-  budgets.forEach(b => {
-    if (b.percentage > 80) {
-      anomalies.push({ category: b.category, percentage: b.percentage, spent: b.spent, limit: b.monthly_limit })
-    }
-  })
+  // ✅ FIX: Anomalies from filtered period + show exact extra amount
+  const anomalies = budgetProgress.filter(b => b.pct > 80)
 
   const recentExpenses = filteredExpenses.slice(0, 5)
 
@@ -123,14 +142,18 @@ function Dashboard() {
           </div>
         </div>
 
+        {/* ✅ FIX: Alert shows exact extra amount */}
         {anomalies.length > 0 && (
           <div style={styles.alertBox}>
             <span style={{ fontSize: '22px' }}>⚠️</span>
             <div>
-              <div style={styles.alertTitle}>Spending Alert</div>
+              <div style={styles.alertTitle}>Spending Alert — {filterLabel[filter]}</div>
               {anomalies.map(a => (
                 <div key={a.category} style={styles.alertText}>
-                  Your <strong>{a.category}</strong> spend (₹{a.spent}) is at {a.percentage}% of your ₹{a.limit} budget
+                  {a.pct >= 100
+                    ? <>Your <strong>{a.category}</strong> spend (₹{a.spentInPeriod}) exceeded budget by <strong style={{ color: '#A32D2D' }}>₹{a.extra}</strong> over your ₹{a.monthly_limit} limit 🚨</>
+                    : <>Your <strong>{a.category}</strong> spend (₹{a.spentInPeriod}) is at {a.pct}% of your ₹{a.monthly_limit} budget — only ₹{a.remaining} remaining</>
+                  }
                 </div>
               ))}
             </div>
@@ -145,7 +168,9 @@ function Dashboard() {
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Budget Remaining</div>
-            <div style={{ ...styles.metricVal, color: totalRemaining < 0 ? '#A32D2D' : '#1D9E75' }}>₹{totalRemaining.toFixed(0)}</div>
+            <div style={{ ...styles.metricVal, color: totalRemaining < 0 ? '#A32D2D' : '#1D9E75' }}>
+              {totalRemaining < 0 ? `-₹${Math.abs(totalRemaining).toFixed(0)}` : `₹${totalRemaining.toFixed(0)}`}
+            </div>
             <div style={styles.metricSub}>of ₹{totalBudget}</div>
           </div>
           <div style={styles.metricCard}>
@@ -155,7 +180,9 @@ function Dashboard() {
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Avg per Day</div>
-            <div style={styles.metricVal}>₹{now.getDate() > 0 ? (totalSpent / now.getDate()).toFixed(0) : 0}</div>
+            <div style={styles.metricVal}>
+              ₹{now.getDate() > 0 ? (totalSpent / now.getDate()).toFixed(0) : 0}
+            </div>
             <div style={styles.metricSub}>daily average</div>
           </div>
         </div>
@@ -172,21 +199,38 @@ function Dashboard() {
             )}
           </div>
 
+          {/* ✅ FIX: Budget progress from filtered period */}
           <div style={styles.card}>
-            <h3 style={styles.cardTitle}>Budget Progress</h3>
-            {budgets.length === 0 ? (
+            <h3 style={styles.cardTitle}>Budget Progress — {filterLabel[filter]}</h3>
+            {budgetProgress.length === 0 ? (
               <p style={{ color: '#888', fontSize: '15px' }}>No budgets set yet</p>
             ) : (
-              budgets.map(b => (
+              budgetProgress.map(b => (
                 <div key={b.id} style={{ marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: '500' }}>{categoryEmoji[b.category]} {b.category}</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: b.percentage >= 90 ? '#A32D2D' : b.percentage >= 70 ? '#BA7517' : '#3B6D11' }}>{b.percentage}%</span>
+                    <span style={{ fontSize: '15px', fontWeight: '500' }}>
+                      {categoryEmoji[b.category]} {b.category}
+                    </span>
+                    <span style={{
+                      fontSize: '14px', fontWeight: '600',
+                      color: b.pct >= 100 ? '#A32D2D' : b.pct >= 70 ? '#BA7517' : '#3B6D11'
+                    }}>
+                      {b.pct}%
+                      {b.pct >= 100 && <span style={{ fontSize: '12px', marginLeft: '6px', color: '#A32D2D' }}>+₹{b.extra} over</span>}
+                    </span>
                   </div>
                   <div style={styles.barTrack}>
-                    <div style={{ ...styles.barFill, width: `${Math.min(b.percentage, 100)}%`, background: b.percentage >= 90 ? '#E24B4A' : b.percentage >= 70 ? '#EF9F27' : '#1D9E75' }} />
+                    <div style={{
+                      ...styles.barFill,
+                      width: `${Math.min(b.pct, 100)}%`,
+                      background: b.pct >= 100 ? '#E24B4A' : b.pct >= 70 ? '#EF9F27' : '#1D9E75'
+                    }} />
                   </div>
-                  <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>₹{b.spent} / ₹{b.monthly_limit}</div>
+                  <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>₹{b.spentInPeriod} / ₹{b.monthly_limit}</span>
+                    {b.pct < 100 && <span style={{ color: '#3B6D11' }}>₹{b.remaining} left</span>}
+                    {b.pct >= 100 && <span style={{ color: '#A32D2D' }}>₹{b.extra} over budget!</span>}
+                  </div>
                 </div>
               ))
             )}
@@ -196,19 +240,29 @@ function Dashboard() {
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>
             Recent Transactions
-            <span style={{ fontSize: '14px', fontWeight: '400', color: '#888', marginLeft: '10px' }}>({filteredExpenses.length} total for {filterLabel[filter]})</span>
+            <span style={{ fontSize: '14px', fontWeight: '400', color: '#888', marginLeft: '10px' }}>
+              ({filteredExpenses.length} total for {filterLabel[filter]})
+            </span>
           </h3>
           {recentExpenses.length === 0 ? (
             <p style={{ color: '#888', fontSize: '15px' }}>No transactions for this period</p>
           ) : (
             recentExpenses.map(exp => (
               <div key={exp.id} style={styles.expRow}>
-                <div style={{ ...styles.expIcon, background: categoryColors[exp.category] || '#f5f5f5' }}>{categoryEmoji[exp.category] || '📌'}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a' }}>{exp.description || exp.category}</div>
-                  <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{exp.category} · {exp.date}</div>
+                <div style={{ ...styles.expIcon, background: categoryColors[exp.category] || '#f5f5f5' }}>
+                  {categoryEmoji[exp.category] || '📌'}
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: '600', color: '#A32D2D' }}>-₹{exp.amount}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a' }}>
+                    {exp.description || exp.category}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>
+                    {exp.category} · {exp.date}
+                  </div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: '#A32D2D' }}>
+                  -₹{exp.amount}
+                </div>
               </div>
             ))
           )}
@@ -228,7 +282,10 @@ const styles = {
   monthPicker: { padding: '8px 14px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#333', outline: 'none', background: '#fff', cursor: 'pointer' },
   welcomeTitle: { fontSize: '32px', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
   welcomeSub: { fontSize: '16px', color: '#888' },
-  alertBox: { background: '#FAEEDA', border: '1px solid #FAC775', borderRadius: '14px', padding: '16px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', marginBottom: '24px' },
+  alertBox: {
+    background: '#FAEEDA', border: '1px solid #FAC775', borderRadius: '14px',
+    padding: '16px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', marginBottom: '24px'
+  },
   alertTitle: { fontSize: '15px', fontWeight: '700', color: '#633806', marginBottom: '6px' },
   alertText: { fontSize: '14px', color: '#854F0B', marginTop: '4px' },
   metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' },
