@@ -13,18 +13,18 @@ function Budgets() {
 
   useEffect(() => { fetchBudgets() }, [])
 
-  // ✅ FIX: Success message auto-disappears after 3 seconds
+  // ✅ FIX: Success message auto-disappears after 1 seconds
   useEffect(() => {
     if (success) {
-      const timer = setTimeout(() => setSuccess(''), 3000)
+      const timer = setTimeout(() => setSuccess(''), 1000)
       return () => clearTimeout(timer)
     }
   }, [success])
 
-  // ✅ FIX: Error message auto-disappears after 4 seconds
+  // ✅ FIX: Error message auto-disappears after 2 seconds
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(''), 4000)
+      const timer = setTimeout(() => setError(''), 2000)
       return () => clearTimeout(timer)
     }
   }, [error])
