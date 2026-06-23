@@ -49,25 +49,7 @@
     display: none !important;
   }
 
-  .nav-links {
-  display: none;
-}
-
-.nav-links.open {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.hamburger-btn {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .hamburger-btn {
-    display: block;
-  }
-}
+  
 }
 
 @media (max-width: 480px) {
