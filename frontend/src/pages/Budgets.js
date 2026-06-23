@@ -13,6 +13,22 @@ function Budgets() {
 
   useEffect(() => { fetchBudgets() }, [])
 
+  // ✅ FIX: Success message auto-disappears after 3 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(''), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
+
+  // ✅ FIX: Error message auto-disappears after 4 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const fetchBudgets = async () => {
     try {
       const res = await API.get('/api/budgets/')
@@ -26,27 +42,49 @@ function Budgets() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError(''); setSuccess('')
+    setError('')
+    setSuccess('')
+
+    // ✅ FIX: Prevent negative or zero budget
+    const limit = parseFloat(formData.monthly_limit)
+    if (isNaN(limit) || limit <= 0) {
+      setError('⚠️ Please enter a valid budget amount greater than 0')
+      return
+    }
+
     try {
-      await API.post('/api/budgets/set', { category: formData.category, monthly_limit: parseFloat(formData.monthly_limit) })
+      await API.post('/api/budgets/set', {
+        category: formData.category,
+        monthly_limit: limit
+      })
       setSuccess(`✅ Budget set for ${formData.category}!`)
       setFormData({ category: 'Food', monthly_limit: '' })
       fetchBudgets()
-    } catch (err) { setError('Failed to set budget') }
+    } catch (err) {
+      setError('Failed to set budget')
+    }
   }
 
   const handleDelete = async (id) => {
-    try { await API.delete(`/api/budgets/delete/${id}`); fetchBudgets() }
-    catch (err) { setError('Failed to delete budget') }
+    try {
+      await API.delete(`/api/budgets/delete/${id}`)
+      fetchBudgets()
+    } catch (err) {
+      setError('Failed to delete budget')
+    }
   }
 
-  const getBarColor = (pct) => pct >= 90 ? '#E24B4A' : pct >= 70 ? '#EF9F27' : '#1D9E75'
-  const getPercentageColor = (pct) => pct >= 90 ? '#A32D2D' : pct >= 70 ? '#BA7517' : '#3B6D11'
-  const categoryEmoji = { Food: '🍔', Transport: '🚌', Shopping: '🛍️', Entertainment: '🎬', Education: '📚', Health: '💊', Other: '📌' }
+  const getBarColor = (pct) => pct >= 100 ? '#E24B4A' : pct >= 70 ? '#EF9F27' : '#1D9E75'
+  const getPercentageColor = (pct) => pct >= 100 ? '#A32D2D' : pct >= 70 ? '#BA7517' : '#3B6D11'
+  const categoryEmoji = {
+    Food: '🍔', Transport: '🚌', Shopping: '🛍️',
+    Entertainment: '🎬', Education: '📚', Health: '💊', Other: '📌'
+  }
 
   const totalLimit = budgets.reduce((sum, b) => sum + b.monthly_limit, 0)
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
   const totalPct = totalLimit > 0 ? ((totalSpent / totalLimit) * 100).toFixed(1) : 0
+  const totalExtra = totalSpent > totalLimit ? (totalSpent - totalLimit).toFixed(0) : 0
 
   return (
     <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
@@ -61,57 +99,117 @@ function Budgets() {
           {budgets.length > 0 && (
             <div style={styles.summaryBadge}>
               <div style={styles.summaryBadgeLabel}>Monthly Budget</div>
-              <div style={styles.summaryBadgeVal}>₹{totalSpent.toFixed(0)}<span style={{ fontSize: '18px', fontWeight: '400', color: '#888' }}> / ₹{totalLimit.toFixed(0)}</span></div>
-              <div style={styles.summaryBadgeSub}>{totalPct}% used</div>
+              <div style={styles.summaryBadgeVal}>
+                ₹{totalSpent.toFixed(0)}
+                <span style={{ fontSize: '18px', fontWeight: '400', color: '#888' }}> / ₹{totalLimit.toFixed(0)}</span>
+              </div>
+              <div style={{ ...styles.summaryBadgeSub, color: totalSpent > totalLimit ? '#A32D2D' : '#aaa' }}>
+                {totalSpent > totalLimit
+                  ? `₹${totalExtra} over budget!`
+                  : `${totalPct}% used`
+                }
+              </div>
             </div>
           )}
         </div>
 
+        {/* Set Budget Form */}
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>🎯 Set Monthly Budget</h2>
+
           {error && <div style={styles.error}>{error}</div>}
           {success && <div style={styles.success}>{success}</div>}
+
           <form onSubmit={handleSubmit} style={styles.formRow} className="form-grid">
             <div style={styles.inputGroup}>
               <label style={styles.label}>Category</label>
-              <select style={styles.input} name='category' value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
-                {CATEGORIES.map(cat => <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>)}
+              <select
+                style={styles.input}
+                name='category'
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>
+                ))}
               </select>
             </div>
+
             <div style={styles.inputGroup}>
               <label style={styles.label}>Monthly Limit (₹)</label>
-              <input style={styles.input} type='number' placeholder='e.g. 5000' value={formData.monthly_limit} onChange={(e) => setFormData({ ...formData, monthly_limit: e.target.value })} required />
+              <input
+                style={{
+                  ...styles.input,
+                  borderColor: formData.monthly_limit && parseFloat(formData.monthly_limit) <= 0 ? '#E24B4A' : '#e0e0e0'
+                }}
+                type='number'
+                placeholder='e.g. 5000'
+                value={formData.monthly_limit}
+                onChange={(e) => setFormData({ ...formData, monthly_limit: e.target.value })}
+                min='1'
+                step='1'
+                required
+              />
+              {/* ✅ FIX: Inline warning for negative/zero */}
+              {formData.monthly_limit && parseFloat(formData.monthly_limit) <= 0 && (
+                <span style={styles.fieldError}>⚠️ Amount must be greater than 0</span>
+              )}
             </div>
+
             <div style={{ display: 'flex', alignItems: 'flex-end' }}>
               <button style={styles.btn} type='submit'>Set Budget</button>
             </div>
           </form>
         </div>
 
+        {/* Overall Summary */}
         {budgets.length > 0 && (
           <div style={styles.card}>
             <div style={styles.summaryRow}>
               <div>
                 <div style={styles.summaryLabel}>Overall Budget Used This Month</div>
-                <div style={styles.summaryVal}>₹{totalSpent.toFixed(0)}<span style={{ color: '#888', fontWeight: '400', fontSize: '20px' }}> / ₹{totalLimit.toFixed(0)}</span></div>
+                <div style={styles.summaryVal}>
+                  ₹{totalSpent.toFixed(0)}
+                  <span style={{ color: '#888', fontWeight: '400', fontSize: '20px' }}> / ₹{totalLimit.toFixed(0)}</span>
+                </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={styles.summaryLabel}>Remaining</div>
-                <div style={{ ...styles.summaryVal, color: '#1D9E75' }}>₹{(totalLimit - totalSpent).toFixed(0)}</div>
+                <div style={styles.summaryLabel}>
+                  {totalSpent > totalLimit ? 'Over by' : 'Remaining'}
+                </div>
+                <div style={{ ...styles.summaryVal, color: totalSpent > totalLimit ? '#A32D2D' : '#1D9E75' }}>
+                  {totalSpent > totalLimit
+                    ? `₹${totalExtra}`
+                    : `₹${(totalLimit - totalSpent).toFixed(0)}`
+                  }
+                </div>
               </div>
             </div>
             <div style={styles.barTrack}>
-              <div style={{ ...styles.barFill, width: `${Math.min(totalPct, 100)}%`, background: getBarColor(totalPct) }} />
+              <div style={{
+                ...styles.barFill,
+                width: `${Math.min(totalPct, 100)}%`,
+                background: getBarColor(totalPct)
+              }} />
             </div>
-            <div style={{ fontSize: '13px', color: '#888', marginTop: '8px' }}>{totalPct}% of total budget used this month</div>
+            <div style={{ fontSize: '13px', color: totalSpent > totalLimit ? '#A32D2D' : '#888', marginTop: '8px' }}>
+              {totalSpent > totalLimit
+                ? `⚠️ You have exceeded your total monthly budget by ₹${totalExtra}`
+                : `${totalPct}% of total budget used this month`
+              }
+            </div>
           </div>
         )}
 
+        {/* Budget Goals List */}
         <div style={styles.card}>
           <div style={styles.listHeader}>
             <h2 style={styles.cardTitle}>Budget Goals — This Month</h2>
-            {budgets.length > 0 && <span style={styles.countBadge}>{budgets.length} categories</span>}
+            {budgets.length > 0 && (
+              <span style={styles.countBadge}>{budgets.length} categories</span>
+            )}
           </div>
+
           {loading ? (
             <p style={{ color: '#888', fontSize: '15px' }}>Loading...</p>
           ) : budgets.length === 0 ? (
@@ -121,31 +219,59 @@ function Budgets() {
               <div style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>Add your first budget goal above!</div>
             </div>
           ) : (
-            budgets.map(b => (
-              <div key={b.id} style={styles.budgetRow}>
-                <div style={styles.budgetTop}>
-                  <div style={styles.budgetLeft}>
-                    <div style={styles.budgetIconWrap}><span style={{ fontSize: '22px' }}>{categoryEmoji[b.category] || '📌'}</span></div>
-                    <span style={styles.budgetName}>{b.category}</span>
+            budgets.map(b => {
+              const extra = b.spent > b.monthly_limit
+                ? (b.spent - b.monthly_limit).toFixed(0)
+                : 0
+              return (
+                <div key={b.id} style={styles.budgetRow}>
+                  <div style={styles.budgetTop}>
+                    <div style={styles.budgetLeft}>
+                      <div style={styles.budgetIconWrap}>
+                        <span style={{ fontSize: '22px' }}>{categoryEmoji[b.category] || '📌'}</span>
+                      </div>
+                      <span style={styles.budgetName}>{b.category}</span>
+                    </div>
+                    <div style={styles.budgetRight}>
+                      <span style={{ fontSize: '15px', fontWeight: '600', color: getPercentageColor(b.percentage) }}>
+                        {b.percentage}%
+                      </span>
+                      <span style={{ fontSize: '14px', color: '#888' }}>
+                        ₹{b.spent} / ₹{b.monthly_limit}
+                      </span>
+                      <button onClick={() => handleDelete(b.id)} style={styles.deleteBtn}>🗑️</button>
+                    </div>
                   </div>
-                  <div style={styles.budgetRight}>
-                    <span style={{ fontSize: '15px', fontWeight: '600', color: getPercentageColor(b.percentage) }}>{b.percentage}%</span>
-                    <span style={{ fontSize: '14px', color: '#888' }}>₹{b.spent} / ₹{b.monthly_limit}</span>
-                    <button onClick={() => handleDelete(b.id)} style={styles.deleteBtn}>🗑️</button>
+
+                  <div style={styles.barTrack}>
+                    <div style={{
+                      ...styles.barFill,
+                      width: `${Math.min(b.percentage, 100)}%`,
+                      background: getBarColor(b.percentage)
+                    }} />
+                  </div>
+
+                  <div style={styles.budgetMeta}>
+                    <span style={{ color: b.percentage >= 100 ? '#A32D2D' : '#888', fontSize: '13px' }}>
+                      {b.percentage >= 100
+                        ? `₹${extra} over budget!`
+                        : `₹${b.remaining} remaining`
+                      }
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {b.percentage >= 90 && b.percentage < 100 && (
+                        <span style={styles.alertBadge}>⚠️ Almost over budget!</span>
+                      )}
+                      {b.percentage >= 100 && (
+                        <span style={{ ...styles.alertBadge, background: '#FCEBEB', color: '#791F1F' }}>
+                          🚨 ₹{extra} over budget!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div style={styles.barTrack}>
-                  <div style={{ ...styles.barFill, width: `${Math.min(b.percentage, 100)}%`, background: getBarColor(b.percentage) }} />
-                </div>
-                <div style={styles.budgetMeta}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>₹{b.remaining} remaining</span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {b.percentage >= 90 && b.percentage < 100 && <span style={styles.alertBadge}>⚠️ Almost over budget!</span>}
-                    {b.percentage >= 100 && <span style={{ ...styles.alertBadge, background: '#FCEBEB', color: '#791F1F' }}>🚨 Over budget!</span>}
-                  </div>
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 
@@ -167,9 +293,10 @@ const styles = {
   listHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' },
   countBadge: { fontSize: '13px', background: '#EEEDFE', color: '#534AB7', padding: '4px 12px', borderRadius: '20px', fontWeight: '500' },
   formRow: { display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '20px', alignItems: 'end' },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
   label: { fontSize: '14px', fontWeight: '500', color: '#444' },
   input: { padding: '12px 16px', border: '1px solid #e0e0e0', borderRadius: '10px', fontSize: '15px', outline: 'none', color: '#333', background: '#fff' },
+  fieldError: { fontSize: '12px', color: '#E24B4A', fontWeight: '500' },
   btn: { padding: '12px 32px', background: '#534AB7', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', whiteSpace: 'nowrap' },
   error: { background: '#FCEBEB', color: '#791F1F', padding: '12px 16px', borderRadius: '10px', fontSize: '14px', marginBottom: '16px' },
   success: { background: '#E1F5EE', color: '#085041', padding: '12px 16px', borderRadius: '10px', fontSize: '14px', marginBottom: '16px' },
