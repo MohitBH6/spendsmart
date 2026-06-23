@@ -13,15 +13,11 @@ function Expenses() {
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
   const [formData, setFormData] = useState({
-    amount: '',
-    category: 'Food',
-    description: '',
+    amount: '', category: 'Food', description: '',
     date: new Date().toISOString().split('T')[0]
   })
 
-  useEffect(() => {
-    fetchExpenses()
-  }, [])
+  useEffect(() => { fetchExpenses() }, [])
 
   const fetchExpenses = async () => {
     try {
@@ -34,31 +30,19 @@ function Expenses() {
     }
   }
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setSuccess('')
-
     const amount = parseFloat(formData.amount)
-    if (isNaN(amount) || amount <= 0) {
-      setError('⚠️ Please enter a valid amount greater than 0')
-      return
-    }
-
+    if (isNaN(amount) || amount <= 0) { setError('⚠️ Please enter a valid amount greater than 0'); return }
     setAdding(true)
     try {
       await API.post('/api/expenses/add', { ...formData, amount })
       setSuccess('✅ Expense added successfully!')
-      setFormData({
-        amount: '',
-        category: 'Food',
-        description: '',
-        date: new Date().toISOString().split('T')[0]
-      })
+      setFormData({ amount: '', category: 'Food', description: '', date: new Date().toISOString().split('T')[0] })
       fetchExpenses()
     } catch (err) {
       setError('Failed to add expense')
@@ -68,68 +52,38 @@ function Expenses() {
   }
 
   const handleDelete = async (id) => {
-    try {
-      await API.delete(`/api/expenses/delete/${id}`)
-      fetchExpenses()
-    } catch (err) {
-      setError('Failed to delete expense')
-    }
+    try { await API.delete(`/api/expenses/delete/${id}`); fetchExpenses() }
+    catch (err) { setError('Failed to delete expense') }
   }
 
-  // start editing — populate edit form with expense data
   const handleEditStart = (exp) => {
     setEditingId(exp.id)
-    setEditData({
-      amount: exp.amount,
-      category: exp.category,
-      description: exp.description || '',
-      date: exp.date
-    })
+    setEditData({ amount: exp.amount, category: exp.category, description: exp.description || '', date: exp.date })
   }
 
-  // cancel editing
-  const handleEditCancel = () => {
-    setEditingId(null)
-    setEditData({})
-  }
+  const handleEditCancel = () => { setEditingId(null); setEditData({}) }
 
-  // save edit
   const handleEditSave = async (id) => {
     const amount = parseFloat(editData.amount)
-    if (isNaN(amount) || amount <= 0) {
-      setError('⚠️ Please enter a valid amount greater than 0')
-      return
-    }
+    if (isNaN(amount) || amount <= 0) { setError('⚠️ Please enter a valid amount greater than 0'); return }
     try {
       await API.put(`/api/expenses/edit/${id}`, { ...editData, amount })
       setSuccess('✅ Expense updated!')
-      setEditingId(null)
-      setEditData({})
+      setEditingId(null); setEditData({})
       fetchExpenses()
-    } catch (err) {
-      setError('Failed to update expense')
-    }
+    } catch (err) { setError('Failed to update expense') }
   }
 
-  const categoryColors = {
-    Food: '#EEEDFE', Transport: '#E1F5EE', Shopping: '#FAEEDA',
-    Entertainment: '#FCEBEB', Education: '#E6F1FB', Health: '#E1F5EE', Other: '#f5f5f5'
-  }
-
-  const categoryEmoji = {
-    Food: '🍔', Transport: '🚌', Shopping: '🛍️',
-    Entertainment: '🎬', Education: '📚', Health: '💊', Other: '📌'
-  }
-
+  const categoryColors = { Food: '#EEEDFE', Transport: '#E1F5EE', Shopping: '#FAEEDA', Entertainment: '#FCEBEB', Education: '#E6F1FB', Health: '#E1F5EE', Other: '#f5f5f5' }
+  const categoryEmoji = { Food: '🍔', Transport: '🚌', Shopping: '🛍️', Entertainment: '🎬', Education: '📚', Health: '💊', Other: '📌' }
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
 
   return (
     <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
       <Navbar />
-      <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }}>
+      <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }} className="page-container">
 
-        {/* Page Header */}
-        <div style={styles.pageHeader}>
+        <div style={styles.pageHeader} className="page-header">
           <div>
             <h1 style={styles.pageTitle}>Expenses</h1>
             <p style={styles.pageSub}>Track and manage your daily spending</p>
@@ -141,83 +95,49 @@ function Expenses() {
           </div>
         </div>
 
-        {/* Add Expense Form */}
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>➕ Add New Expense</h2>
-
           {error && <div style={styles.error}>{error}</div>}
           {success && <div style={styles.success}>{success}</div>}
-
           <form onSubmit={handleSubmit}>
-            <div style={styles.formGrid}>
+            <div style={styles.formGrid} className="form-grid">
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Amount (₹)</label>
                 <input
-                  style={{
-                    ...styles.input,
-                    borderColor: formData.amount && parseFloat(formData.amount) <= 0 ? '#E24B4A' : '#e0e0e0'
-                  }}
-                  type='number'
-                  name='amount'
-                  placeholder='0.00'
-                  value={formData.amount}
-                  onChange={handleChange}
-                  min='0.01'
-                  step='0.01'
-                  required
+                  style={{ ...styles.input, borderColor: formData.amount && parseFloat(formData.amount) <= 0 ? '#E24B4A' : '#e0e0e0' }}
+                  type='number' name='amount' placeholder='0.00' value={formData.amount}
+                  onChange={handleChange} min='0.01' step='0.01' required
                 />
                 {formData.amount && parseFloat(formData.amount) <= 0 && (
                   <span style={styles.fieldError}>⚠️ Amount must be greater than 0</span>
                 )}
               </div>
-
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Category</label>
                 <select style={styles.input} name='category' value={formData.category} onChange={handleChange}>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>
-                  ))}
+                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>)}
                 </select>
               </div>
-
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Description</label>
-                <input
-                  style={styles.input}
-                  type='text'
-                  name='description'
-                  placeholder='What did you spend on?'
-                  value={formData.description}
-                  onChange={handleChange}
-                />
+                <input style={styles.input} type='text' name='description' placeholder='What did you spend on?' value={formData.description} onChange={handleChange} />
               </div>
-
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Date</label>
-                <input
-                  style={styles.input}
-                  type='date'
-                  name='date'
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                />
+                <input style={styles.input} type='date' name='date' value={formData.date} onChange={handleChange} required />
               </div>
             </div>
-
             <button style={adding ? styles.btnDisabled : styles.btn} type='submit' disabled={adding}>
               {adding ? '⏳ Adding...' : '+ Add Expense'}
             </button>
           </form>
         </div>
 
-        {/* Expenses List */}
         <div style={styles.card}>
           <div style={styles.listHeader}>
             <h2 style={styles.cardTitle}>Recent Transactions</h2>
             <span style={styles.countBadge}>{expenses.length} total</span>
           </div>
-
           {loading ? (
             <p style={{ color: '#888', fontSize: '15px' }}>Loading...</p>
           ) : expenses.length === 0 ? (
@@ -229,12 +149,9 @@ function Expenses() {
           ) : (
             expenses.map(exp => (
               <div key={exp.id}>
-                {/* Normal view */}
                 {editingId !== exp.id ? (
                   <div style={styles.expenseRow}>
-                    <div style={{ ...styles.expIcon, background: categoryColors[exp.category] || '#f5f5f5' }}>
-                      {categoryEmoji[exp.category] || '📌'}
-                    </div>
+                    <div style={{ ...styles.expIcon, background: categoryColors[exp.category] || '#f5f5f5' }}>{categoryEmoji[exp.category] || '📌'}</div>
                     <div style={{ flex: 1 }}>
                       <div style={styles.expName}>{exp.description || exp.category}</div>
                       <div style={styles.expMeta}>
@@ -244,53 +161,29 @@ function Expenses() {
                       </div>
                     </div>
                     <div style={styles.expAmount}>-₹{exp.amount}</div>
-                    <button onClick={() => handleEditStart(exp)} style={styles.editBtn} title='Edit expense'>✏️</button>
-                    <button onClick={() => handleDelete(exp.id)} style={styles.deleteBtn} title='Delete expense'>🗑️</button>
+                    <button onClick={() => handleEditStart(exp)} style={styles.editBtn} title='Edit'>✏️</button>
+                    <button onClick={() => handleDelete(exp.id)} style={styles.deleteBtn} title='Delete'>🗑️</button>
                   </div>
                 ) : (
-                  /* Edit mode — inline form */
                   <div style={styles.editRow}>
-                    <div style={styles.editGrid}>
+                    <div style={styles.editGrid} className="form-grid">
                       <div style={styles.inputGroup}>
                         <label style={styles.label}>Amount (₹)</label>
-                        <input
-                          style={styles.input}
-                          type='number'
-                          value={editData.amount}
-                          onChange={(e) => setEditData({ ...editData, amount: e.target.value })}
-                          min='0.01'
-                          step='0.01'
-                        />
+                        <input style={styles.input} type='number' value={editData.amount} onChange={(e) => setEditData({ ...editData, amount: e.target.value })} min='0.01' step='0.01' />
                       </div>
                       <div style={styles.inputGroup}>
                         <label style={styles.label}>Category</label>
-                        <select
-                          style={styles.input}
-                          value={editData.category}
-                          onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                        >
-                          {CATEGORIES.map(cat => (
-                            <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>
-                          ))}
+                        <select style={styles.input} value={editData.category} onChange={(e) => setEditData({ ...editData, category: e.target.value })}>
+                          {CATEGORIES.map(cat => <option key={cat} value={cat}>{categoryEmoji[cat]} {cat}</option>)}
                         </select>
                       </div>
                       <div style={styles.inputGroup}>
                         <label style={styles.label}>Description</label>
-                        <input
-                          style={styles.input}
-                          type='text'
-                          value={editData.description}
-                          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                        />
+                        <input style={styles.input} type='text' value={editData.description} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
                       </div>
                       <div style={styles.inputGroup}>
                         <label style={styles.label}>Date</label>
-                        <input
-                          style={styles.input}
-                          type='date'
-                          value={editData.date}
-                          onChange={(e) => setEditData({ ...editData, date: e.target.value })}
-                        />
+                        <input style={styles.input} type='date' value={editData.date} onChange={(e) => setEditData({ ...editData, date: e.target.value })} />
                       </div>
                     </div>
                     <div style={styles.editActions}>
@@ -303,32 +196,20 @@ function Expenses() {
             ))
           )}
         </div>
-
       </div>
     </div>
   )
 }
 
 const styles = {
-  pageHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '32px',
-  },
+  pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
   pageTitle: { fontSize: '32px', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' },
   pageSub: { fontSize: '16px', color: '#888' },
-  totalBadge: {
-    background: '#fff', borderRadius: '16px', padding: '20px 28px',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.07)', textAlign: 'right',
-  },
+  totalBadge: { background: '#fff', borderRadius: '16px', padding: '20px 28px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', textAlign: 'right' },
   totalLabel: { fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' },
   totalVal: { fontSize: '28px', fontWeight: '700', color: '#534AB7' },
   totalSub: { fontSize: '13px', color: '#aaa', marginTop: '4px' },
-  card: {
-    background: '#fff', borderRadius: '16px', padding: '28px',
-    marginBottom: '24px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-  },
+  card: { background: '#fff', borderRadius: '16px', padding: '28px', marginBottom: '24px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' },
   cardTitle: { fontSize: '18px', fontWeight: '600', color: '#1a1a1a', marginBottom: '20px' },
   listHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' },
   countBadge: { fontSize: '13px', background: '#EEEDFE', color: '#534AB7', padding: '4px 12px', borderRadius: '20px', fontWeight: '500' },
@@ -336,27 +217,12 @@ const styles = {
   editGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '14px', marginBottom: '14px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { fontSize: '14px', fontWeight: '500', color: '#444' },
-  input: {
-    padding: '12px 16px', border: '1px solid #e0e0e0', borderRadius: '10px',
-    fontSize: '15px', outline: 'none', color: '#333', background: '#fff',
-  },
+  input: { padding: '12px 16px', border: '1px solid #e0e0e0', borderRadius: '10px', fontSize: '15px', outline: 'none', color: '#333', background: '#fff' },
   fieldError: { fontSize: '12px', color: '#E24B4A', fontWeight: '500' },
-  btn: {
-    padding: '12px 32px', background: '#534AB7', color: '#fff',
-    border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer',
-  },
-  btnDisabled: {
-    padding: '12px 32px', background: '#a9a4d8', color: '#fff',
-    border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'not-allowed',
-  },
-  saveBtn: {
-    padding: '9px 20px', background: '#1D9E75', color: '#fff',
-    border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
-  },
-  cancelBtn: {
-    padding: '9px 20px', background: '#f0f0f0', color: '#555',
-    border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
-  },
+  btn: { padding: '12px 32px', background: '#534AB7', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' },
+  btnDisabled: { padding: '12px 32px', background: '#a9a4d8', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'not-allowed' },
+  saveBtn: { padding: '9px 20px', background: '#1D9E75', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
+  cancelBtn: { padding: '9px 20px', background: '#f0f0f0', color: '#555', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
   error: { background: '#FCEBEB', color: '#791F1F', padding: '12px 16px', borderRadius: '10px', fontSize: '14px', marginBottom: '16px' },
   success: { background: '#E1F5EE', color: '#085041', padding: '12px 16px', borderRadius: '10px', fontSize: '14px', marginBottom: '16px' },
   expenseRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid #f5f5f5' },

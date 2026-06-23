@@ -5,9 +5,8 @@ function About() {
   return (
     <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
       <Navbar />
-      <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }}>
+      <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }} className="page-container">
 
-        {/* What is SpendSmart */}
         <div style={styles.card}>
           <div style={styles.appHeader}>
             <div style={styles.appLogo}><Logo size={48} /></div>
@@ -23,10 +22,9 @@ function About() {
           </p>
         </div>
 
-        {/* Features — 3 columns */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>✨ Key Features</h2>
-          <div style={styles.featGrid}>
+          <div style={styles.featGrid} className="feat-grid">
             {[
               { icon: '📊', title: 'Visual Dashboard', desc: 'Pie chart category breakdown, budget progress bars, and key spending metrics at a glance.' },
               { icon: '⚠️', title: 'Smart Alerts', desc: 'Automatic alerts when any budget category crosses 80% — so you never overspend unknowingly.' },
@@ -46,10 +44,9 @@ function About() {
           </div>
         </div>
 
-        {/* How to use — full width */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>📋 How to Use</h2>
-          <div style={styles.stepsGrid}>
+          <div style={styles.stepsGrid} className="steps-grid">
             {[
               { step: 1, title: 'Register / Login', desc: 'Create your account or sign in. All your data stays completely private to you.' },
               { step: 2, title: 'Set Your Budgets', desc: 'Go to the Budgets page and set a monthly spending limit for each category.' },
@@ -68,7 +65,6 @@ function About() {
           </div>
         </div>
 
-        {/* Developer Card */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>👨‍💻 Developer</h2>
           <div style={styles.devCard}>
@@ -78,12 +74,8 @@ function About() {
               <div style={styles.devDeg}>BE (Computer Science & Engineering)</div>
               <div style={styles.devCollege}>Panjab University, Chandigarh</div>
               <div style={styles.devLinks}>
-                <a href='mailto:mohitpegowal293@gmail.com' style={styles.devLink}>
-                  📧 mohitpegowal293@gmail.com
-                </a>
-                <a href='https://github.com/MohitBH6' target='_blank' rel='noreferrer' style={styles.devLink}>
-                  🐙 GitHub
-                </a>
+                <a href='mailto:mohitpegowal293@gmail.com' style={styles.devLink}>📧 mohitpegowal293@gmail.com</a>
+                <a href='https://github.com/MohitBH6' target='_blank' rel='noreferrer' style={styles.devLink}>🐙 GitHub</a>
               </div>
             </div>
           </div>
@@ -95,69 +87,25 @@ function About() {
 }
 
 const styles = {
-  card: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '28px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-  },
-  appHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '16px',
-  },
+  card: { background: '#fff', borderRadius: '16px', padding: '28px', marginBottom: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' },
+  appHeader: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' },
   appLogo: { fontSize: '40px' },
   appName: { fontSize: '26px', fontWeight: '700', color: '#534AB7', margin: 0 },
   appTagline: { fontSize: '15px', color: '#888', margin: 0 },
   appDesc: { fontSize: '15px', color: '#555', lineHeight: '1.8' },
   sectionTitle: { fontSize: '18px', fontWeight: '600', color: '#1a1a1a', marginBottom: '20px' },
-  featGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
-    gap: '16px',
-  },
-  featItem: {
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'flex-start',
-    background: '#f9f9f9',
-    borderRadius: '12px',
-    padding: '16px',
-  },
+  featGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' },
+  featItem: { display: 'flex', gap: '12px', alignItems: 'flex-start', background: '#f9f9f9', borderRadius: '12px', padding: '16px' },
   featIcon: { fontSize: '24px', flexShrink: 0, marginTop: '2px' },
   featTitle: { fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' },
   featDesc: { fontSize: '13px', color: '#666', lineHeight: '1.5' },
-  stepsGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
-  },
-  stepRow: {
-    display: 'flex',
-    gap: '14px',
-    alignItems: 'flex-start',
-    background: '#f9f9f9',
-    borderRadius: '12px',
-    padding: '16px',
-  },
-  stepNum: {
-    width: '30px', height: '30px', borderRadius: '50%',
-    background: '#534AB7', color: '#fff', fontSize: '14px', fontWeight: '600',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
+  stepsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
+  stepRow: { display: 'flex', gap: '14px', alignItems: 'flex-start', background: '#f9f9f9', borderRadius: '12px', padding: '16px' },
+  stepNum: { width: '30px', height: '30px', borderRadius: '50%', background: '#534AB7', color: '#fff', fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   stepTitle: { fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' },
   stepDesc: { fontSize: '13px', color: '#666', lineHeight: '1.5' },
-  devCard: {
-    display: 'flex', gap: '20px', alignItems: 'flex-start',
-    background: '#f9f9f9', borderRadius: '12px', padding: '24px',
-  },
-  devAvatar: {
-    width: '60px', height: '60px', borderRadius: '50%',
-    background: '#534AB7', color: '#fff', fontSize: '20px', fontWeight: '600',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
+  devCard: { display: 'flex', gap: '20px', alignItems: 'flex-start', background: '#f9f9f9', borderRadius: '12px', padding: '24px' },
+  devAvatar: { width: '60px', height: '60px', borderRadius: '50%', background: '#534AB7', color: '#fff', fontSize: '20px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   devName: { fontSize: '20px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' },
   devDeg: { fontSize: '14px', color: '#534AB7', fontWeight: '500', marginBottom: '2px' },
   devCollege: { fontSize: '14px', color: '#888', marginBottom: '14px' },

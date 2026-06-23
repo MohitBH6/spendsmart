@@ -24,7 +24,7 @@ function Navbar() {
   <span>SpendSmart</span>
 </Link>
       {/* Nav Links */}
-      <div style={styles.links}>
+   <div style={styles.links} className="nav-links">
         <Link to='/dashboard' style={isActive('/dashboard') ? styles.linkActive : styles.link}>
           Dashboard
         </Link>
