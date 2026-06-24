@@ -19,13 +19,34 @@ function Dashboard() {
   )
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
-  useEffect(() => { fetchData() }, [])
+  // get month and year based on current filter
+  const getMonthYear = () => {
+    const now = new Date()
+    if (filter === 'This Month') return { month: now.getMonth() + 1, year: now.getFullYear() }
+    if (filter === 'Last Month') {
+      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      return { month: last.getMonth() + 1, year: last.getFullYear() }
+    }
+    if (filter === 'Custom Month') {
+      const [year, month] = customMonth.split('-').map(Number)
+      return { month, year }
+    }
+    // This Week / All Time — use current month
+    return { month: now.getMonth() + 1, year: now.getFullYear() }
+  }
+
+  // refetch budgets when filter changes
+  useEffect(() => {
+    fetchData()
+  }, [filter, customMonth])
 
   const fetchData = async () => {
+    setLoading(true)
     try {
+      const { month, year } = getMonthYear()
       const [expRes, budRes] = await Promise.all([
         API.get('/api/expenses/'),
-        API.get('/api/budgets/')
+        API.get(`/api/budgets/?month=${month}&year=${year}`)
       ])
       setExpenses(expRes.data)
       setBudgets(budRes.data)
@@ -63,9 +84,13 @@ function Dashboard() {
   const filteredExpenses = getFilteredExpenses()
   const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-  // ✅ FIX: Calculate budget progress from filtered expenses
-  // This ensures when viewing Last Month or Custom Month,
-  // budget bars show that period's spending — not current month
+  // category totals for pie chart
+  const categoryTotals = {}
+  filteredExpenses.forEach(e => {
+    categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount
+  })
+
+  // budgeted categories with period spending
   const budgetProgress = budgets.map(b => {
     const spentInPeriod = filteredExpenses
       .filter(e => e.category === b.category)
@@ -81,17 +106,30 @@ function Dashboard() {
       spentInPeriod,
       pct,
       extra,
-      remaining: (b.monthly_limit - spentInPeriod).toFixed(0)
+      remaining: (b.monthly_limit - spentInPeriod).toFixed(0),
+      hasBudget: true
     }
   })
 
+  // categories with expenses but NO budget set for this period
+  const unbudgetedCategories = Object.keys(categoryTotals)
+    .filter(cat => !budgets.find(b => b.category === cat))
+    .map(cat => ({
+      id: `no-budget-${cat}`,
+      category: cat,
+      monthly_limit: 0,
+      spentInPeriod: categoryTotals[cat],
+      pct: 0,
+      extra: categoryTotals[cat],
+      remaining: 0,
+      hasBudget: false
+    }))
+
+  // all categories combined
+  const allCategoryProgress = [...budgetProgress, ...unbudgetedCategories]
+
   const totalBudget = budgets.reduce((sum, b) => sum + b.monthly_limit, 0)
   const totalRemaining = totalBudget - totalSpent
-
-  const categoryTotals = {}
-  filteredExpenses.forEach(e => {
-    categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount
-  })
 
   const pieData = {
     labels: Object.keys(categoryTotals),
@@ -102,7 +140,7 @@ function Dashboard() {
     }]
   }
 
-  // ✅ FIX: Anomalies from filtered period + show exact extra amount
+  // anomalies — only from budgeted categories
   const anomalies = budgetProgress.filter(b => b.pct > 80)
 
   const recentExpenses = filteredExpenses.slice(0, 5)
@@ -115,7 +153,9 @@ function Dashboard() {
     return (
       <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
         <Navbar />
-        <div style={{ padding: '48px', textAlign: 'center', color: '#888', fontSize: '16px' }}>Loading your dashboard...</div>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#888', fontSize: '16px' }}>
+          Loading your dashboard...
+        </div>
       </div>
     )
   }
@@ -125,6 +165,7 @@ function Dashboard() {
       <Navbar />
       <div style={{ padding: '40px 48px', maxWidth: '1300px', margin: '0 auto' }} className="page-container">
 
+        {/* Welcome + Filter */}
         <div style={styles.welcomeRow} className="welcome-row">
           <div>
             <h1 style={styles.welcomeTitle}>Good day, {user.name?.split(' ')[0]}! 👋</h1>
@@ -133,16 +174,27 @@ function Dashboard() {
           <div style={styles.filterSection}>
             <div style={styles.filterBar} className="filter-bar">
               {['This Week', 'This Month', 'Last Month', 'All Time', 'Custom Month'].map(f => (
-                <button key={f} onClick={() => setFilter(f)} style={filter === f ? styles.filterBtnActive : styles.filterBtn}>{f}</button>
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  style={filter === f ? styles.filterBtnActive : styles.filterBtn}
+                >
+                  {f}
+                </button>
               ))}
             </div>
             {filter === 'Custom Month' && (
-              <input type='month' value={customMonth} onChange={(e) => setCustomMonth(e.target.value)} style={styles.monthPicker} />
+              <input
+                type='month'
+                value={customMonth}
+                onChange={(e) => setCustomMonth(e.target.value)}
+                style={styles.monthPicker}
+              />
             )}
           </div>
         </div>
 
-        {/* ✅ FIX: Alert shows exact extra amount */}
+        {/* Spending Alert */}
         {anomalies.length > 0 && (
           <div style={styles.alertBox}>
             <span style={{ fontSize: '22px' }}>⚠️</span>
@@ -160,6 +212,7 @@ function Dashboard() {
           </div>
         )}
 
+        {/* Metric Cards */}
         <div style={styles.metricsGrid} className="metrics-grid">
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Total Spent</div>
@@ -168,10 +221,17 @@ function Dashboard() {
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Budget Remaining</div>
-            <div style={{ ...styles.metricVal, color: totalRemaining < 0 ? '#A32D2D' : '#1D9E75' }}>
-              {totalRemaining < 0 ? `-₹${Math.abs(totalRemaining).toFixed(0)}` : `₹${totalRemaining.toFixed(0)}`}
+            <div style={{ ...styles.metricVal, color: totalBudget === 0 ? '#888' : totalRemaining < 0 ? '#A32D2D' : '#1D9E75' }}>
+              {totalBudget === 0
+                ? 'N/A'
+                : totalRemaining < 0
+                  ? `-₹${Math.abs(totalRemaining).toFixed(0)}`
+                  : `₹${totalRemaining.toFixed(0)}`
+              }
             </div>
-            <div style={styles.metricSub}>of ₹{totalBudget}</div>
+            <div style={styles.metricSub}>
+              {totalBudget === 0 ? 'no budget set' : `of ₹${totalBudget}`}
+            </div>
           </div>
           <div style={styles.metricCard}>
             <div style={styles.metricLabel}>Transactions</div>
@@ -187,56 +247,99 @@ function Dashboard() {
           </div>
         </div>
 
+        {/* Charts Row */}
         <div style={styles.chartsGrid} className="charts-grid">
+
+          {/* Pie Chart */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Spending by Category</h3>
             {Object.keys(categoryTotals).length === 0 ? (
               <p style={{ color: '#888', fontSize: '15px' }}>No expenses for this period</p>
             ) : (
               <div style={{ maxWidth: '360px', margin: '0 auto' }}>
-                <Pie data={pieData} options={{ plugins: { legend: { position: 'bottom', labels: { font: { size: 13 }, padding: 16 } } } }} />
+                <Pie data={pieData} options={{
+                  plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 13 }, padding: 16 } }
+                  }
+                }} />
               </div>
             )}
           </div>
 
-          {/* ✅ FIX: Budget progress from filtered period */}
+          {/* Budget Progress — period specific */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Budget Progress — {filterLabel[filter]}</h3>
-            {budgetProgress.length === 0 ? (
-              <p style={{ color: '#888', fontSize: '15px' }}>No budgets set yet</p>
+
+            {allCategoryProgress.length === 0 ? (
+              <p style={{ color: '#888', fontSize: '15px' }}>No expenses or budgets for this period</p>
             ) : (
-              budgetProgress.map(b => (
+              allCategoryProgress.map(b => (
                 <div key={b.id} style={{ marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: '500' }}>
-                      {categoryEmoji[b.category]} {b.category}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '15px', fontWeight: '500' }}>
+                        {categoryEmoji[b.category]} {b.category}
+                      </span>
+                      {!b.hasBudget && (
+                        <span style={{ fontSize: '11px', color: '#aaa', background: '#f5f5f5', padding: '2px 6px', borderRadius: '10px' }}>
+                          no budget
+                        </span>
+                      )}
+                    </div>
                     <span style={{
                       fontSize: '14px', fontWeight: '600',
-                      color: b.pct >= 100 ? '#A32D2D' : b.pct >= 70 ? '#BA7517' : '#3B6D11'
+                      color: !b.hasBudget ? '#888' : b.pct >= 100 ? '#A32D2D' : b.pct >= 70 ? '#BA7517' : '#3B6D11'
                     }}>
-                      {b.pct}%
-                      {b.pct >= 100 && <span style={{ fontSize: '12px', marginLeft: '6px', color: '#A32D2D' }}>+₹{b.extra} over</span>}
+                      {b.hasBudget
+                        ? <>
+                          {b.pct}%
+                          {b.pct >= 100 && <span style={{ fontSize: '12px', marginLeft: '6px', color: '#A32D2D' }}>+₹{b.extra} over</span>}
+                        </>
+                        : `₹${b.spentInPeriod} spent`
+                      }
                     </span>
                   </div>
-                  <div style={styles.barTrack}>
-                    <div style={{
-                      ...styles.barFill,
-                      width: `${Math.min(b.pct, 100)}%`,
-                      background: b.pct >= 100 ? '#E24B4A' : b.pct >= 70 ? '#EF9F27' : '#1D9E75'
-                    }} />
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>₹{b.spentInPeriod} / ₹{b.monthly_limit}</span>
-                    {b.pct < 100 && <span style={{ color: '#3B6D11' }}>₹{b.remaining} left</span>}
-                    {b.pct >= 100 && <span style={{ color: '#A32D2D' }}>₹{b.extra} over budget!</span>}
-                  </div>
+
+                  {b.hasBudget ? (
+                    <>
+                      <div style={styles.barTrack}>
+                        <div style={{
+                          ...styles.barFill,
+                          width: `${Math.min(b.pct, 100)}%`,
+                          background: b.pct >= 100 ? '#E24B4A' : b.pct >= 70 ? '#EF9F27' : '#1D9E75'
+                        }} />
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>₹{b.spentInPeriod} / ₹{b.monthly_limit}</span>
+                        {b.pct < 100
+                          ? <span style={{ color: '#3B6D11' }}>₹{b.remaining} left</span>
+                          : <span style={{ color: '#A32D2D' }}>₹{b.extra} over budget!</span>
+                        }
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ ...styles.barTrack, background: '#f5f5f5' }}>
+                        <div style={{ ...styles.barFill, width: '100%', background: '#e0e0e0' }} />
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#aaa', marginTop: '5px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>No budget set</span>
+                        <span
+                          onClick={() => window.location.href = '/budgets'}
+                          style={{ color: '#534AB7', cursor: 'pointer', fontWeight: '500' }}
+                        >
+                          Set budget →
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))
             )}
           </div>
         </div>
 
+        {/* Recent Transactions */}
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>
             Recent Transactions
