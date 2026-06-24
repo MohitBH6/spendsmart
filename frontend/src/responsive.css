@@ -55,5 +55,24 @@
 @media (max-width: 480px) {
   .metrics-grid {
     grid-template-columns: 1fr 1fr !important;
+  }  
+}
+
+/* show hamburger on mobile */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: block !important;
+  }
+
+  .logout-btn {
+    display: none !important;
+  }
+
+  .user-name {
+    display: none !important;
+  }
+
+  .nav-links {
+    display: none !important;
   }
 }
