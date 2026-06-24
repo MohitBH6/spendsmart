@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Pie } from 'react-chartjs-2'
 import {
   Chart as ChartJS, ArcElement, Tooltip, Legend,
@@ -20,7 +20,8 @@ function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   // get month and year based on current filter
-  const getMonthYear = () => {
+  // wrapped in useCallback so its identity only changes when filter/customMonth change
+  const getMonthYear = useCallback(() => {
     const now = new Date()
     if (filter === 'This Month') return { month: now.getMonth() + 1, year: now.getFullYear() }
     if (filter === 'Last Month') {
@@ -33,14 +34,11 @@ function Dashboard() {
     }
     // This Week / All Time — use current month
     return { month: now.getMonth() + 1, year: now.getFullYear() }
-  }
-
-  // refetch budgets when filter changes
-  useEffect(() => {
-    fetchData()
   }, [filter, customMonth])
 
-  const fetchData = async () => {
+  // wrapped in useCallback so it only changes identity when getMonthYear changes
+  // (which itself only changes when filter/customMonth change) — prevents infinite loop
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const { month, year } = getMonthYear()
@@ -55,7 +53,12 @@ function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getMonthYear])
+
+  // refetch when fetchData's identity changes (i.e. when filter/customMonth change)
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const now = new Date()
 
