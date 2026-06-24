@@ -273,6 +273,12 @@ function Dashboard() {
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Budget Progress — {filterLabel[filter]}</h3>
 
+            {unbudgetedCategories.length > 0 && (
+              <div style={styles.unbudgetedBanner}>
+                💡 {unbudgetedCategories.length} {unbudgetedCategories.length === 1 ? 'category has' : 'categories have'} no budget set
+              </div>
+            )}
+
             {allCategoryProgress.length === 0 ? (
               <p style={{ color: '#888', fontSize: '15px' }}>No expenses or budgets for this period</p>
             ) : (
@@ -328,7 +334,7 @@ function Dashboard() {
                       <div style={{ fontSize: '12px', color: '#aaa', marginTop: '5px', display: 'flex', justifyContent: 'space-between' }}>
                         <span>No budget set</span>
                         <span
-                          onClick={() => window.location.href = '/budgets'}
+                          onClick={() => window.location.href = `/budgets?category=${b.category}`}
                           style={{ color: '#534AB7', cursor: 'pointer', fontWeight: '500' }}
                         >
                           Set budget →
@@ -394,6 +400,10 @@ const styles = {
   },
   alertTitle: { fontSize: '15px', fontWeight: '700', color: '#633806', marginBottom: '6px' },
   alertText: { fontSize: '14px', color: '#854F0B', marginTop: '4px' },
+  unbudgetedBanner: {
+    background: '#E6F1FB', color: '#1d4e80', fontSize: '13px', fontWeight: '500',
+    padding: '10px 14px', borderRadius: '10px', marginBottom: '18px'
+  },
   metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' },
   metricCard: { background: '#fff', borderRadius: '16px', padding: '28px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)' },
   metricLabel: { fontSize: '13px', color: '#888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '500' },

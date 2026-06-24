@@ -7,7 +7,15 @@ const CATEGORIES = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Education
 function Budgets() {
   const [budgets, setBudgets] = useState([])
   const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState({ category: 'Food', monthly_limit: '' })
+
+  // read ?category= from the URL (e.g. coming from a "Set budget →" link on the Dashboard)
+  // falls back to 'Food' if no valid category is present
+  const [formData, setFormData] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    const cat = params.get('category')
+    return { category: CATEGORIES.includes(cat) ? cat : 'Food', monthly_limit: '' }
+  })
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
