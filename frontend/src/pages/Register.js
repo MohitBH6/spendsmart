@@ -8,6 +8,7 @@ function Register() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -17,7 +18,6 @@ function Register() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       await API.post('/api/auth/register', formData)
       navigate('/login')
@@ -69,15 +69,24 @@ function Register() {
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type='password'
-              name='password'
-              placeholder='Create a password'
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <div style={styles.passwordWrapper}>
+              <input
+                style={styles.passwordInput}
+                type={showPassword ? 'text' : 'password'}
+                name='password'
+                placeholder='Create a password'
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type='button'
+                onClick={() => setShowPassword(!showPassword)}
+                style={styles.eyeBtn}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           <button
@@ -120,6 +129,9 @@ const styles = {
     fontWeight: '600',
     color: '#534AB7',
     marginBottom: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
   },
   title: {
     fontSize: '22px',
@@ -158,6 +170,29 @@ const styles = {
     fontSize: '14px',
     outline: 'none',
     color: '#333',
+  },
+  passwordWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    width: '100%',
+    padding: '10px 44px 10px 14px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    outline: 'none',
+    color: '#333',
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: '12px',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: '0',
   },
   btn: {
     width: '100%',
