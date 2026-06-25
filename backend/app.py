@@ -31,5 +31,9 @@ with app.app_context():
     db.create_all()
     print("Database tables created!")
 
+    @app.route('/api/health')
+    def health():
+      return {'status': 'alive'}, 200
+
 if __name__ == '__main__':
     app.run(debug=True)
