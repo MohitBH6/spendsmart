@@ -13,23 +13,34 @@ function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+ const handleSubmit = async (e) => {
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-    try {
-      const res = await API.post('/api/auth/login', formData)
-      // save token and user to localStorage
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
-      navigate('/dashboard')
-    } catch (err) {
+  // show warming up message after 3 seconds
+  const warmupTimer = setTimeout(() => {
+    setError('⏳ Server is waking up, please wait 30-50 seconds and try again...')
+    setLoading(false)
+  }, 5000)
+
+  try {
+    const res = await API.post('/api/auth/login', formData)
+    clearTimeout(warmupTimer)
+    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('user', JSON.stringify(res.data.user))
+    navigate('/dashboard')
+  } catch (err) {
+    clearTimeout(warmupTimer)
+    if (err.code === 'ECONNABORTED' || !err.response) {
+      setError('⏳ Server is waking up, please wait 30 seconds and try again')
+    } else {
       setError(err.response?.data?.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
     }
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div style={styles.page}>

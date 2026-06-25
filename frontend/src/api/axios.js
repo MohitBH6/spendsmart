@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 const API = axios.create({
-  baseURL: 'https://spendsmart-backend-jmwb.onrender.com'
+  baseURL: 'https://spendsmart-backend-jmwb.onrender.com',
+  timeout: 60000  // wait 60 seconds before giving up
 })
 
 // attach token to every request
@@ -13,15 +14,13 @@ API.interceptors.request.use((config) => {
   return config
 })
 
-// auto logout if token expires (401 response)
+// auto logout if token expires
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // clear expired token
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      // redirect to login
       window.location.href = '/login'
     }
     return Promise.reject(error)
