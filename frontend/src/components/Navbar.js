@@ -1,4 +1,5 @@
-import { useState } from 'react'
+
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 
@@ -12,6 +13,7 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    setMenuOpen(false)
     navigate('/login')
   }
 
@@ -19,89 +21,205 @@ function Navbar() {
 
   const handleNavClick = () => setMenuOpen(false)
 
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
+
   return (
     <>
-      <nav style={styles.nav}>
-        {/* Logo */}
-        <Link to='/dashboard' style={styles.logo} onClick={handleNavClick}>
+      <nav style={styles.nav} className="spendsmart-navbar">
+        <Link
+          to="/dashboard"
+          style={styles.logo}
+          onClick={handleNavClick}
+        >
           <Logo size={28} />
           <span>SpendSmart</span>
         </Link>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop navigation */}
         <div style={styles.links} className="nav-links">
-          <Link to='/dashboard' style={isActive('/dashboard') ? styles.linkActive : styles.link}>Dashboard</Link>
-          <Link to='/expenses' style={isActive('/expenses') ? styles.linkActive : styles.link}>Expenses</Link>
-          <Link to='/budgets' style={isActive('/budgets') ? styles.linkActive : styles.link}>Budgets</Link>
-          <Link to='/about' style={isActive('/about') ? styles.linkActive : styles.link}>About</Link>
+          <Link
+            to="/dashboard"
+            style={isActive('/dashboard') ? styles.linkActive : styles.link}
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            to="/expenses"
+            style={isActive('/expenses') ? styles.linkActive : styles.link}
+          >
+            Expenses
+          </Link>
+
+          <Link
+            to="/budgets"
+            style={isActive('/budgets') ? styles.linkActive : styles.link}
+          >
+            Budgets
+          </Link>
+
+          <Link
+            to="/about"
+            style={isActive('/about') ? styles.linkActive : styles.link}
+          >
+            About
+          </Link>
         </div>
 
-        {/* Right side — user + logout + hamburger */}
+        {/* User and mobile menu button */}
         <div style={styles.userSection}>
-          {/* User chip — hide name on mobile */}
           <div style={styles.userChip}>
             <div style={styles.avatar}>
               {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
             </div>
+
             <span style={styles.userName} className="user-name">
               {user.name || 'Mohit Kumar'}
             </span>
           </div>
 
-          {/* Logout — desktop only */}
-          <button onClick={handleLogout} style={styles.logoutBtn} className="logout-btn">
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={styles.logoutBtn}
+            className="logout-btn"
+          >
             Logout
           </button>
 
-          {/* Hamburger — mobile only */}
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
             style={styles.hamburger}
-            className="hamburger-btn"
+            className={`hamburger-btn ${menuOpen ? 'is-open' : ''}`}
+            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={menuOpen}
+            aria-controls="spendsmart-mobile-menu"
           >
-            {menuOpen ? '✕' : '☰'}
+            <span />
+            <span />
+            <span />
           </button>
         </div>
       </nav>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile navigation drawer */}
       {menuOpen && (
-        <div style={styles.mobileMenu} className="mobile-menu">
-          <Link
-            to='/dashboard'
-            style={isActive('/dashboard') ? styles.mobileLinkActive : styles.mobileLink}
-            onClick={handleNavClick}
+        <div
+          className="mobile-nav-overlay"
+          onClick={handleNavClick}
+        >
+          <aside
+            id="spendsmart-mobile-menu"
+            className="mobile-menu"
+            onClick={(event) => event.stopPropagation()}
+            aria-label="Mobile navigation"
           >
-            📊 Dashboard
-          </Link>
-          <Link
-            to='/expenses'
-            style={isActive('/expenses') ? styles.mobileMenuLinkActive : styles.mobileLink}
-            onClick={handleNavClick}
-          >
-            📝 Expenses
-          </Link>
-          <Link
-            to='/budgets'
-            style={isActive('/budgets') ? styles.mobileMenuLinkActive : styles.mobileLink}
-            onClick={handleNavClick}
-          >
-            🎯 Budgets
-          </Link>
-          <Link
-            to='/about'
-            style={isActive('/about') ? styles.mobileMenuLinkActive : styles.mobileLink}
-            onClick={handleNavClick}
-          >
-            ℹ️ About
-          </Link>
-          <div style={styles.mobileDivider} />
-          <button
-            onClick={() => { handleLogout(); handleNavClick() }}
-            style={styles.mobileLogout}
-          >
-            🚪 Logout
-          </button>
+            <div className="mobile-menu-header">
+              <div className="mobile-menu-title">
+                <Logo size={30} />
+
+                <div>
+                  <strong>SpendSmart</strong>
+                  <small>Your money, organized.</small>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="mobile-menu-close"
+                onClick={handleNavClick}
+                aria-label="Close navigation menu"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mobile-menu-section">
+              <span className="mobile-menu-label">MENU</span>
+
+              {[
+                {
+                  path: '/dashboard',
+                  icon: '📊',
+                  label: 'Dashboard',
+                },
+                {
+                  path: '/expenses',
+                  icon: '📝',
+                  label: 'Expenses',
+                },
+                {
+                  path: '/budgets',
+                  icon: '🎯',
+                  label: 'Budgets',
+                },
+                {
+                  path: '/about',
+                  icon: 'ℹ️',
+                  label: 'About',
+                },
+              ].map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={handleNavClick}
+                  className={`mobile-menu-item ${
+                    isActive(item.path) ? 'active' : ''
+                  }`}
+                  aria-current={
+                    isActive(item.path) ? 'page' : undefined
+                  }
+                >
+                  <span className="mobile-menu-icon">
+                    {item.icon}
+                  </span>
+
+                  <span>{item.label}</span>
+
+                  {isActive(item.path) && (
+                    <span className="mobile-menu-indicator" />
+                  )}
+                </Link>
+              ))}
+            </div>
+
+            <div className="mobile-menu-footer">
+              <div className="mobile-menu-account">
+                <div className="mobile-menu-avatar">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
+                </div>
+
+                <div className="mobile-menu-user-details">
+                  <strong>{user.name || 'Mohit Kumar'}</strong>
+                  <small>SpendSmart account</small>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="mobile-menu-logout"
+                onClick={handleLogout}
+              >
+                <span>↪</span>
+                Log out
+              </button>
+            </div>
+          </aside>
         </div>
       )}
     </>
@@ -116,11 +234,13 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
+    gap: '12px',
+    boxShadow: '0 1px 8px rgba(0, 0, 0, 0.08)',
     position: 'sticky',
     top: 0,
-    zIndex: 100,
+    zIndex: 1000,
   },
+
   logo: {
     fontSize: '18px',
     fontWeight: '600',
@@ -129,11 +249,15 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
+    flexShrink: 0,
   },
+
   links: {
     display: 'flex',
+    alignItems: 'center',
     gap: '4px',
   },
+
   link: {
     padding: '6px 14px',
     borderRadius: '20px',
@@ -142,6 +266,7 @@ const styles = {
     textDecoration: 'none',
     fontWeight: '400',
   },
+
   linkActive: {
     padding: '6px 14px',
     borderRadius: '20px',
@@ -151,11 +276,14 @@ const styles = {
     fontWeight: '500',
     background: '#EEEDFE',
   },
+
   userSection: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
+    flexShrink: 0,
   },
+
   userChip: {
     display: 'flex',
     alignItems: 'center',
@@ -165,6 +293,7 @@ const styles = {
     borderRadius: '20px',
     background: '#f9f9f9',
   },
+
   avatar: {
     width: '26px',
     height: '26px',
@@ -177,11 +306,13 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   userName: {
     fontSize: '13px',
     fontWeight: '500',
     color: '#333',
   },
+
   logoutBtn: {
     padding: '6px 14px',
     background: 'transparent',
@@ -191,59 +322,21 @@ const styles = {
     color: '#666',
     cursor: 'pointer',
   },
+
   hamburger: {
     display: 'none',
-    background: 'transparent',
-    border: '1px solid #e0e0e0',
-    borderRadius: '8px',
-    fontSize: '18px',
-    padding: '4px 10px',
+    width: '44px',
+    height: '44px',
+    padding: 0,
+    background: 'linear-gradient(145deg, #21143f, #39216a)',
+    border: '1px solid rgba(167, 139, 250, 0.65)',
+    borderRadius: '13px',
     cursor: 'pointer',
-    color: '#534AB7',
-  },
-  mobileMenu: {
-    position: 'fixed',
-    top: '60px',
-    left: 0,
-    right: 0,
-    background: '#fff',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-    zIndex: 99,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '8px 0',
-  },
-  mobileLink: {
-    padding: '14px 24px',
-    fontSize: '15px',
-    color: '#444',
-    textDecoration: 'none',
-    fontWeight: '400',
-    borderBottom: '1px solid #f5f5f5',
-  },
-  mobileMenuLinkActive: {
-    padding: '14px 24px',
-    fontSize: '15px',
-    color: '#534AB7',
-    textDecoration: 'none',
-    fontWeight: '600',
-    borderBottom: '1px solid #f5f5f5',
-    background: '#EEEDFE',
-  },
-  mobileLogout: {
-    padding: '14px 24px',
-    fontSize: '15px',
-    color: '#A32D2D',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    fontWeight: '500',
-  },
-  mobileDivider: {
-    height: '1px',
-    background: '#f0f0f0',
-    margin: '4px 0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: '0 0 12px rgba(139, 92, 246, 0.18)',
+    transition: 'all 0.25s ease',
   },
 }
 
